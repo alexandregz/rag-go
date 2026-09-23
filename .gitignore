@@ -1,0 +1,12 @@
+# Local Pi runtime state
+.atl/
+
+pdfbot
+logs/
+*pdf
+
+.DS_Store
+
+
+# Índice vectorial xerado (reconstruíble con -index)
+db_vectores.gob
