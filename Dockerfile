@@ -28,14 +28,14 @@ COPY db_vectores.gob /data/
 VOLUME /data
 
 # Porto e interface de rede configurables (ver main.go: -host / -port)
-ENV PORT=8080 \
+ENV PORT=8987 \
     HOST=0.0.0.0 \
     OLLAMA_URL=http://host.docker.internal:11434
 
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
-EXPOSE 8080
+EXPOSE 8987
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD wget -q -O /dev/null http://localhost:${PORT}/ || exit 1

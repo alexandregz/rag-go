@@ -100,7 +100,7 @@ func main() {
 	selectedModel := flag.String("model", "", "Modelo de Ollama a usar (ex: qwen3.5:4b-mlx, llama3.2:3b)")
 	webMode := flag.Bool("web", false, "Iniciar servidor web")
 	host := flag.String("host", envOrDefault("HOST", ""), "Interface de rede do servidor web (baleiro = todas, ex: 127.0.0.1)")
-	port := flag.String("port", envOrDefault("PORT", "8080"), "Porto do servidor web")
+	port := flag.String("port", envOrDefault("PORT", "8987"), "Porto do servidor web")
 	dataDir := flag.String("data", envOrDefault("DATA_DIR", "."), "Directorio de datos: PDFs, índice e logs")
 	flag.Parse()
 
