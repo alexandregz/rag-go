@@ -85,14 +85,14 @@ Escollendo un modelo distinto do predeterminado:
 ./pdfbot -web
 ```
 
-Ábrese en <http://localhost:8080>. Para cambiar porto e interface:
+Ábrese en <http://localhost:8987>. Para cambiar porto e interface:
 
 ```bash
 # Bindear só no loopback e no porto 9000
 ./pdfbot -web -host 127.0.0.1 -port 9000
 
-# Bindear en todas as interfaces (ex: 0.0.0.0), porto 8080
-./pdfbot -web -host 0.0.0.0 -port 8080
+# Bindear en todas as interfaces (ex: 0.0.0.0), porto 8987
+./pdfbot -web -host 0.0.0.0 -port 8987
 ```
 
 ---
@@ -103,7 +103,7 @@ As opcións da liña de comandos pódense sobrescribir/establecer tamén coas se
 
 | Variable   | Descrición                                                        | Por defecto              |
 |------------|-------------------------------------------------------------------|--------------------------|
-| `PORT`     | Porto do servidor web                                             | `8080`                   |
+| `PORT`     | Porto do servidor web                                             | `8987`                   |
 | `HOST`     | Interface de rede do servidor web (baleiro = todas)               | *(baleiro)*              |
 | `OLLAMA_URL` | Endpoint da API de Ollama                                        | `http://localhost:11434` |
 
@@ -119,12 +119,13 @@ docker build -t pdfbot .
 
 ### Lanzar o servidor web (porto e interface axustábeis)
 
-Con `HOST` a `0.0.0.0`, porto `8080` (ou calquera outro coa variable `PORT`):
+Con `HOST` a `0.0.0.0`, porto `8987` (ou calquera outro coa variable `PORT`):
 
 ```bash
 docker run --rm \
   -e HOST=0.0.0.0 \
-  -p 8080:8080 \
+  -p 8987:8987 \
+  -e PORT=8987 \
   -e OLLAMA_URL=http://host.docker.internal:11434 \
   pdfbot
 ```
@@ -134,11 +135,55 @@ Se Ollama corre na máquina host, `host.docker.internal` resolvelo en macOS/Wind
 ```bash
 docker run --rm --network host \
   -e HOST=0.0.0.0 \
-  -e PORT=8080 \
+  -e PORT=8987 \
   pdfbot
 ```
 
 > O contedor arranca en modo web automaticamente. Se o índice `db_vectores.gob` non está incluído, o contedor executa a indexación (necesita `bge-m3:latest` accesible) antes de servir.
+
+### Corpus persistente: montar `/data` (recomendado)
+
+O contedor traballa sobre `/data`, que concentra **corpus documental (PDFs) + índice (`db_vectores.gob`) + `logs/`**. Montar un **bind mount** a un directorio local permite actualizar PDFs, rexenerar o índice e revisar logs **sen reconstruír a imaxe nin entrar no contedor**:
+
+```bash
+# Preparar o directorio de datos no host (só a primeira vez)
+mkdir -p data
+cp *.pdf data/
+
+# Arrancar co volume montado
+docker run --rm \
+  -v "$(pwd)/data:/data" \
+  -e HOST=0.0.0.0 \
+  -p 8987:8987 \
+  -e PORT=8987 \
+  -e OLLAMA_URL=http://host.docker.internal:11434 \
+  pdfbot
+```
+
+Actualizar a normativa a partir de agora resúmese en:
+
+```bash
+cp novo_regulamento.pdf data/   # e reiniciar o contedor se o índice quedou obsoleto
+```
+
+Para forzar a reindexación, borra o índice e reinicia (volverase a xerar ao arrincar):
+
+```bash
+rm data/db_vectores.gob
+# docker restart <contedor>  ou  docker run de novo (se lanzaches con --rm)
+```
+
+Se prefires que Docker xestione o almacenamento (sen directorio no host), usa un volume nomeado; na primeira creación cópiase o estado inicial da imaxe:
+
+```bash
+docker run --rm -v pdfbot_data:/data \
+  -e HOST=0.0.0.0 -p 8987:8987 \
+  -e PORT=8987 \
+  -e OLLAMA_URL=http://host.docker.internal:11434 \
+  pdfbot
+```
+
+> 📦 Desde fóra do contedor tócase só o que hai no volume: non fai falta `docker cp` nin entrar nel.
 
 ---
 
@@ -152,6 +197,7 @@ rag-go/
 ├── docker-entrypoint.sh
 ├── README.md
 ├── *.pdf               # Corpus documental (normativa municipal)
+├── data/               # Recomendado: corpus + índice + logs persistidos (montado en /data no contedor)
 └── logs/               # Xerado: rexistro diario das consultas (JSON por liña)
 ```
 

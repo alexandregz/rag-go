@@ -10,3 +10,5 @@ logs/
 
 # Índice vectorial xerado (reconstruíble con -index)
 db_vectores.gob
+
+data/
