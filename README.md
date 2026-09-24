@@ -107,7 +107,7 @@ As opcións da liña de comandos pódense sobrescribir/establecer tamén coas se
 |------------|-------------------------------------------------------------------|--------------------------|
 | `PORT`     | Porto do servidor web                                             | `8987`                   |
 | `HOST`     | Interface de rede do servidor web (baleiro = todas)               | *(baleiro)*              |
-| `OLLAMA_URL` | Endpoint da API de Ollama                                        | `http://localhost:11434` |
+| `OLLAMA_URL` | Endpoint da API de Ollama (baleiro = autodetección no entrypoint)   | *(autodetección)*        |
 | `DATA_DIR` | Directorio de datos: PDFs, índice e logs                          | `.`                      |
 
 ---
@@ -129,11 +129,12 @@ docker run --rm \
   -e HOST=0.0.0.0 \
   -p 8987:8987 \
   -e PORT=8987 \
-  -e OLLAMA_URL=http://host.docker.internal:11434 \
   pdfbot
 ```
 
-Se Ollama corre na máquina host, `host.docker.internal` resolvelo en macOS/Windows; en **Linux** usa `--network host` ou a IP do host:
+Se Ollama corre na máquina host, `host.docker.internal` resolvelo en macOS/Windows; en **Linux** usa `--network host` ou a IP do host.
+
+> 🤖 Se non se indica `OLLAMA_URL`, o entrypoint **autodetecta** o host ao arrincar: `host.docker.internal` (Docker Desktop), `host.lima.internal` / `192.168.64.1` (Container/Colima en macOS) ou `localhost` como último recurso.
 
 ```bash
 docker run --rm --network host \
@@ -159,7 +160,6 @@ docker run --rm \
   -e HOST=0.0.0.0 \
   -p 8987:8987 \
   -e PORT=8987 \
-  -e OLLAMA_URL=http://host.docker.internal:11434 \
   pdfbot
 ```
 
@@ -182,7 +182,6 @@ Se prefires que Docker xestione o almacenamento (sen directorio no host), usa un
 docker run --rm -v pdfbot_data:/data \
   -e HOST=0.0.0.0 -p 8987:8987 \
   -e PORT=8987 \
-  -e OLLAMA_URL=http://host.docker.internal:11434 \
   pdfbot
 ```
 

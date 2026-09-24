@@ -5,7 +5,18 @@ set -e
 # Exemplo: docker run -v "$(pwd)/data:/data" ...
 DATA_DIR="${DATA_DIR:-/data}"
 
-# Diríxese a Ollama segundo a variable de contorno (OLLAMA_URL)
+# Se non se indicou OLLAMA_URL, autodetecta o host de Ollama: proba os alias
+# de Docker Desktop e de Lima/Container/Colima e, en último caso, o gateway.
+if [ -z "${OLLAMA_URL}" ]; then
+  for host in host.docker.internal host.lima.internal 192.168.64.1; do
+    if wget -q -T 2 -O /dev/null "http://${host}:11434/api/version" 2>/dev/null; then
+      OLLAMA_URL="http://${host}:11434"
+      break
+    fi
+  done
+  OLLAMA_URL="${OLLAMA_URL:-http://localhost:11434}"
+fi
+
 echo "🔎 Ollama en: ${OLLAMA_URL}"
 echo "📁 Datos en: ${DATA_DIR}"
 

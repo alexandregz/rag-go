@@ -27,10 +27,11 @@ COPY db_vectores.gob /data/
 # O corpus, o índice e os logs deben persistir fóra do ciclo de vida do contedor.
 VOLUME /data
 
-# Porto e interface de rede configurables (ver main.go: -host / -port)
+# Porto e interface de rede configurables (ver main.go: -host / -port).
+# OLLAMA_URL non ten default fixo: o entrypoint autodetecta o host en tempo de
+# execución (host.docker.internal, host.lima.internal, 192.168.64.1 ou localhost).
 ENV PORT=8987 \
-    HOST=0.0.0.0 \
-    OLLAMA_URL=http://host.docker.internal:11434
+    HOST=0.0.0.0
 
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
