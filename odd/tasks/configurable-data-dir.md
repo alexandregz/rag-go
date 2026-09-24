@@ -2,6 +2,7 @@
 
 Feature file: `odd/tasks/configurable-data-dir.md` · Branch: `feat/flag-data-dir`
 Mirror: Engram topic `odd/configurable-data-dir/tasks`
+Status: **CLOSED** (implemented, verified, committed)
 
 ## Objective
 
@@ -61,41 +62,60 @@ and the entrypoint passes `-data /data` explicitly.
 - `T2` — docker-entrypoint.sh: `DATA_DIR` handling + `-data` passthrough.
   Route: delegated (same writer, same trigger). → DONE
 - `T3` — README.md: document `-data` and `DATA_DIR`. Route: delegated. → DONE
-- `T4` — Verify: `go build ./...`, `go vet ./...`, `sh -n docker-entrypoint.sh`,
-  `go run . -h` shows `-data`; parent spot-check re-runs build; work-unit commit
-  on `feat/flag-data-dir`; native risk assessment + verifier per returned plan.
-  Route: inline parent (spot check + commit) + on-demand verifier. → IN PROGRESS
+- `T4` — Verify and commit. Writer self-verification: all 4 commands pass.
+  Parent spot-check: `go build ./...` OK (re-run). Native assessment (RDD off):
+  first call unassessable (untracked `odd/`), after commit `7892c84` re-assessed
+  → risk high (`shell_process` signals on docker-entrypoint.sh) → independent
+  verifier required. `gentle-ai-verify` (task mug2fcs1-2-yzbd):
+  `status: pass` — build/vet/sh -n/`-h` all exit 0, scope confirmed (4 files).
+  Route: inline parent (spot check + commit) + on-demand verifier. → DONE
 
 ## Acceptance criteria
 
 - `./pdfbot -index -data data/` and `./pdfbot -web -data data/` work from the
   repo root with `data/` holding the PDFs; `/docs/` lists them and links open.
+  → Verified statically; runtime check requires Ollama (user-run).
 - Container: `DATA_DIR=/data` (entrypoint default) → first run without index
-  generates it from the mounted corpus, then serves on `$PORT`.
-- Default behavior unchanged with no `-data` / `DATA_DIR`.
+  generates it from the mounted corpus, then serves on `$PORT`. → Verified
+  statically (entrypoint passes `-data /data`); runtime user-run.
+- Default behavior unchanged with no `-data` / `DATA_DIR`. → Verified
+  statically (fallback `.` in both flag default and envOrDefault).
 - `go build ./...` passes; entrypoint shell syntax valid; `-h` shows `-data`.
+  → Verified (writer + parent spot-check + independent verifier).
 
 ## Progress
 
 - [x] T1 — main.go flag + DataDir wiring
 - [x] T2 — docker-entrypoint.sh DATA_DIR + `-data`
 - [x] T3 — README.md documentation
-- [~] T4 — verification evidence + work-unit commit
+- [x] T4 — verification + work-unit commit
 
 ## Verification evidence
 
 - Writer (gentle-ai-worker, task mug2c0c3-1-7pcg): `go build ./...` success;
   `go vet ./...` success; `sh -n docker-entrypoint.sh` OK; `go run . -h` shows
-  `  -data string`. Writer grep for old patterns (`cd /data`, `http.Dir(".")`,
-  bare IndexFile open/create, `Source: archivo`, `Glob("*.pdf")`) → no matches.
-- Parent spot-check: `go build ./...` → OK (re-run, pass).
-- Native assessment (RDD off → `gentle_review assess`): first call unassessable
-  (untracked `odd/` required declaration); resolved by committing the work-unit,
-  then re-assessed over the committed range.
-- (pending) independent verifier per returned plan; commit SHA.
+  `  -data string`. Grep for old patterns (`cd /data`, `http.Dir(".")`, bare
+  IndexFile open/create, `Source: archivo`, `Glob("*.pdf")`) → no matches.
+- Parent spot-check: `go build ./...` → OK (re-run).
+- Parent structural readback of `git show 7892c84`: change matches spec exactly,
+  including `Chunk.Source` = `filepath.Base(archivo)`.
+- Independent verifier (gentle-ai-verify, task mug2fcs1-2-yzbd): `status: pass`
+  — `go build ./...` exit 0, `go vet ./...` exit 0, `sh -n` exit 0,
+  `go run . -h | grep -i -- '-data'` → `  -data string`, `git show --stat`
+  confirms scope (README.md 3+, docker-entrypoint.sh 11, main.go 29,
+  odd/tasks/... 101 new).
+- Commits on `feat/flag-data-dir`:
+  - `12f01d6` build(docker): persist PDFs/index/logs via /data volume and
+    document port 8987
+  - `7892c84` feat: add -data flag and DATA_DIR for configurable data directory
+- Runtime behavior (index/globbing/HTTP against a real corpus) still requires a
+  user-run with Ollama — out of scope of static verification.
 
 ## Next step
 
-- Commit the work-unit (code + this feature doc), re-run `gentle_review assess`
-  with `baseRef=12f01d6, committedOnly:true`, follow the returned plan
-  (independent `gentle-ai-verify` if the plan says so), close T4, report.
+- User: populate `data/` with the PDFs, rebuild the image (`container build -t
+  pdfbot .`), and run with `-p 8876:8876 -e PORT=8876 -v "$(pwd)/data:/data"`.
+- User decision (not performed): push / PR / merge of `feat/flag-data-dir`
+  (2 commits) into `main`.
+- Optional follow-up: flip the real PORT default to 8987 in `main.go` and the
+  Dockerfile ENV so docs and code fully agree.
