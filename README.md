@@ -43,6 +43,8 @@ Usa **Ollama** en local como motor de modelos:
 
 > ⚠️ Os PDFs que se queren consultar teñen que estar no **mesmo directorio** que o binario.
 
+> 💾 Con `-data <dir>` (ou a variable de contorno `DATA_DIR`) selecciónase o directorio que contén os PDFs, o índice e os logs; por defecto é o directorio actual.
+
 ---
 
 ## Instalación
@@ -106,6 +108,7 @@ As opcións da liña de comandos pódense sobrescribir/establecer tamén coas se
 | `PORT`     | Porto do servidor web                                             | `8987`                   |
 | `HOST`     | Interface de rede do servidor web (baleiro = todas)               | *(baleiro)*              |
 | `OLLAMA_URL` | Endpoint da API de Ollama                                        | `http://localhost:11434` |
+| `DATA_DIR` | Directorio de datos: PDFs, índice e logs                          | `.`                      |
 
 ---
 

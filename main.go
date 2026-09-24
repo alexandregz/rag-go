@@ -33,6 +33,10 @@ var OllamaURL = envOrDefault("OLLAMA_URL", "http://localhost:11434")
 // ChatModel é unha variable global cun modelo por defecto
 var ChatModel = "gemma4:31b-cloud"
 
+// DataDir é o directorio que contén os PDFs, o índice e os logs
+// (configurable coa flag -data ou coa variable de contorno DATA_DIR)
+var DataDir = "."
+
 // Modelos de chat locais que se consideran "optimais" para o RAG por defecto
 var ModelosLocais = []string{"qwen3.5:4b-mlx", "qwen3.5:9b-mlx", "llama3.2:3b", "gemma4:12b-mlx"}
 
@@ -91,13 +95,16 @@ type ChatMeta struct {
 }
 
 func main() {
-	indexMode := flag.Bool("index", false, "Indexar os PDFs do directorio actual")
+	indexMode := flag.Bool("index", false, "Indexar os PDFs do directorio de datos")
 	query := flag.String("q", "", "Pregunta a facer ao bot por liña de comandos")
 	selectedModel := flag.String("model", "", "Modelo de Ollama a usar (ex: qwen3.5:4b-mlx, llama3.2:3b)")
 	webMode := flag.Bool("web", false, "Iniciar servidor web")
 	host := flag.String("host", envOrDefault("HOST", ""), "Interface de rede do servidor web (baleiro = todas, ex: 127.0.0.1)")
 	port := flag.String("port", envOrDefault("PORT", "8080"), "Porto do servidor web")
+	dataDir := flag.String("data", envOrDefault("DATA_DIR", "."), "Directorio de datos: PDFs, índice e logs")
 	flag.Parse()
+
+	DataDir = *dataDir
 
 	// Se se especifica un modelo por CLI, sobrescríbese o por defecto
 	if *selectedModel != "" {
@@ -142,7 +149,7 @@ func main() {
 }
 
 func cargarDB() {
-	file, err := os.Open(IndexFile)
+	file, err := os.Open(filepath.Join(DataDir, IndexFile))
 	if err != nil {
 		log.Fatal("Non se atopou o índice. Executa primeiro con -index")
 	}
@@ -311,7 +318,7 @@ func iniciarServidorWeb(host, port string) {
 	http.HandleFunc("/api/load-ram", handleLoadRAM)
 
 	// O propio FileServer de Go xa lista os ficheiros ao acceder a /docs/
-	http.Handle("/docs/", http.StripPrefix("/docs/", http.FileServer(http.Dir("."))))
+	http.Handle("/docs/", http.StripPrefix("/docs/", http.FileServer(http.Dir(DataDir))))
 
 	// host baleiro => lánzase como ":port" e bindea todas as interfaces
 	addr := fmt.Sprintf("%s:%s", host, port)
@@ -358,11 +365,11 @@ func handleQuery(w http.ResponseWriter, r *http.Request) {
 // rexistrarConsulta engade unha entrada de log (sen o texto do contexto, só as métricas)
 // ao ficheiro diario logs/consultas_AAAA-MM-DD.log en formato JSON por liña.
 func rexistrarConsulta(pregunta string, meta ChatMeta) {
-	if err := os.MkdirAll("logs", 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(DataDir, "logs"), 0o755); err != nil {
 		log.Printf("⚠️ Non se puido crear o directorio logs/: %v", err)
 		return
 	}
-	ficheiro := filepath.Join("logs", fmt.Sprintf("consultas_%s.log", time.Now().Format("2006-01-02")))
+	ficheiro := filepath.Join(DataDir, "logs", fmt.Sprintf("consultas_%s.log", time.Now().Format("2006-01-02")))
 	f, err := os.OpenFile(ficheiro, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
 	if err != nil {
 		log.Printf("⚠️ Non se puido abrir o log %s: %v", ficheiro, err)
@@ -917,13 +924,13 @@ func servirmainPage(w http.ResponseWriter, r *http.Request) {
 
 func indexarPDFs() {
 	var baseDeDatos []Chunk
-	archivos, err := filepath.Glob("*.pdf")
+	archivos, err := filepath.Glob(filepath.Join(DataDir, "*.pdf"))
 	if err != nil || len(archivos) == 0 {
-		log.Fatal("Non se atoparon PDFs no directorio actual")
+		log.Fatalf("Non se atoparon PDFs en %s", DataDir)
 	}
 
 	for _, archivo := range archivos {
-		fmt.Printf("Lendo: %s\n", archivo)
+		fmt.Printf("Lendo: %s\n", filepath.Base(archivo))
 		paginas, err := extraerTextoPDF(archivo)
 		if err != nil {
 			log.Printf("Erro lendo %s: %v", archivo, err)
@@ -941,7 +948,7 @@ func indexarPDFs() {
 				vector := pedirEmbeddingOllama(pedazo)
 				baseDeDatos = append(baseDeDatos, Chunk{
 					Text:   pedazo,
-					Source: archivo,
+					Source: filepath.Base(archivo),
 					Page:   numPag,
 					Vector: vector,
 				})
@@ -949,13 +956,13 @@ func indexarPDFs() {
 		}
 	}
 
-	file, err := os.Create(IndexFile)
+	file, err := os.Create(filepath.Join(DataDir, IndexFile))
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
 	gob.NewEncoder(file).Encode(baseDeDatos)
-	fmt.Printf("✅ Indexación completada. Gardados %d chunks en %s\n", len(baseDeDatos), IndexFile)
+	fmt.Printf("✅ Indexación completada. Gardados %d chunks en %s\n", len(baseDeDatos), filepath.Join(DataDir, IndexFile))
 }
 
 func extraerTextoPDF(ruta string) (map[int]string, error) {
