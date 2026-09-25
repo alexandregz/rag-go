@@ -9,12 +9,18 @@ DATA_DIR="${DATA_DIR:-/data}"
 # de Docker Desktop e de Lima/Container/Colima e, en último caso, o gateway.
 if [ -z "${OLLAMA_URL}" ]; then
   for host in host.docker.internal host.lima.internal 192.168.64.1; do
+    echo "🔎 Probando Ollama en http://${host}:11434/api/version..."
     if wget -q -T 2 -O /dev/null "http://${host}:11434/api/version" 2>/dev/null; then
+      echo "✅ Ollama detectado en ${host}"
       OLLAMA_URL="http://${host}:11434"
       break
     fi
+    echo "   (sen resposta)"
   done
-  OLLAMA_URL="${OLLAMA_URL:-http://localhost:11434}"
+  if [ -z "${OLLAMA_URL}" ]; then
+    echo "⚠️ Non se detectou Ollama; pasa -e OLLAMA_URL=http://<IP-do-host>:11434 se debería haber resposta." >&2
+    OLLAMA_URL="http://localhost:11434"
+  fi
 fi
 
 echo "🔎 Ollama en: ${OLLAMA_URL}"
