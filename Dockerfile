@@ -38,7 +38,7 @@ RUN chmod +x /docker-entrypoint.sh
 
 EXPOSE 8987
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=300s --retries=3 \
     CMD wget -q -O /dev/null http://localhost:${PORT}/ || exit 1
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
