@@ -1,7 +1,7 @@
 # Local Pi runtime state
 .atl/
 
-pdfbot
+rag-go
 logs/
 *pdf
 

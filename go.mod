@@ -1,4 +1,4 @@
-module pdfbot
+module rag-go
 
 go 1.27.1
 

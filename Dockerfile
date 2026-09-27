@@ -7,7 +7,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /out/pdfbot .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /out/rag-go .
 
 # ---------- Stage de execución ----------
 FROM alpine:3.20
@@ -20,7 +20,7 @@ WORKDIR /data
 
 # Binario e corpus documental + índice xa xerado (se existe).
 # Cópiase a /data como estado inicial; cun volume montado, o cwd do proceso é o volume.
-COPY --from=builder /out/pdfbot /usr/local/bin/pdfbot
+COPY --from=builder /out/rag-go /usr/local/bin/rag-go
 COPY *.pdf /data/
 COPY db_vectores.gob /data/
 

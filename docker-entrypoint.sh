@@ -30,9 +30,9 @@ echo "📁 Datos en: ${DATA_DIR}"
 # Requírese que bge-m3:latest estea dispoñible en Ollama.
 if [ ! -f "${DATA_DIR}/db_vectores.gob" ]; then
   echo "📦 Índice non atopado. Xerando a partir dos PDFs do directorio..."
-  pdfbot -index -data "${DATA_DIR}"
+  rag-go -index -data "${DATA_DIR}"
 fi
 
 # Lanza o servidor web co porto e a interface configurados.
 echo "🚀 Arrancando servidor web en http://${HOST}:${PORT}"
-exec pdfbot -web -host "${HOST}" -port "${PORT}" -data "${DATA_DIR}"
+exec rag-go -web -host "${HOST}" -port "${PORT}" -data "${DATA_DIR}"

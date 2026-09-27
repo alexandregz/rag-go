@@ -1,4 +1,4 @@
-# pdfbot — Asistente RAG do Regulamento Municipal de Ames
+# rag-go — Asistente RAG do Regulamento Municipal de Ames
 
 Aplicación en **Go** que fai *Retrieval-Augmented Generation* (RAG) sobre os ficheiros **PDF** que se atopen no mesmo directorio. Permite facer preguntas en linguaxe natural sobre a normativa municipal, tanto desde a **liña de comandos** (consola) como desde un **entorno web** sinxelo de autoservizo.
 
@@ -52,7 +52,7 @@ Usa **Ollama** en local como motor de modelos:
 ```bash
 git clone <URL_DO_REPO>
 cd rag-go
-go build -o pdfbot .
+go build -o rag-go .
 ```
 
 ---
@@ -64,7 +64,7 @@ go build -o pdfbot .
 Crea o índice vectorial `db_vectores.gob` a partir dos `.pdf` do directorio.
 
 ```bash
-./pdfbot -index
+./rag-go -index
 ```
 
 > Necesita que Ollama teña o modelo `bge-m3:latest` para xerar os embeddings.
@@ -72,29 +72,29 @@ Crea o índice vectorial `db_vectores.gob` a partir dos `.pdf` do directorio.
 ### 2. Consultar desde consola
 
 ```bash
-./pdfbot -q "En que artigo se regula a participación cidadá?"
+./rag-go -q "En que artigo se regula a participación cidadá?"
 ```
 
 Escollendo un modelo distinto do predeterminado:
 
 ```bash
-./pdfbot -q "Que obrigas ten Ames Radio?" -model "qwen3.5:4b-mlx"
+./rag-go -q "Que obrigas ten Ames Radio?" -model "qwen3.5:4b-mlx"
 ```
 
 ### 3. Servidor web
 
 ```bash
-./pdfbot -web
+./rag-go -web
 ```
 
 Ábrese en <http://localhost:8987>. Para cambiar porto e interface:
 
 ```bash
 # Bindear só no loopback e no porto 9000
-./pdfbot -web -host 127.0.0.1 -port 9000
+./rag-go -web -host 127.0.0.1 -port 9000
 
 # Bindear en todas as interfaces (ex: 0.0.0.0), porto 8987
-./pdfbot -web -host 0.0.0.0 -port 8987
+./rag-go -web -host 0.0.0.0 -port 8987
 ```
 
 ---
@@ -117,7 +117,7 @@ As opcións da liña de comandos pódense sobrescribir/establecer tamén coas se
 ### Construír a imaxe
 
 ```bash
-docker build -t pdfbot .
+docker build -t rag-go .
 ```
 
 ### Lanzar o servidor web (porto e interface axustábeis)
@@ -129,7 +129,7 @@ docker run --rm \
   -e HOST=0.0.0.0 \
   -p 8987:8987 \
   -e PORT=8987 \
-  pdfbot
+  rag-go
 ```
 
 Se Ollama corre na máquina host, `host.docker.internal` resolvelo en macOS/Windows; en **Linux** usa `--network host` ou a IP do host.
@@ -140,7 +140,7 @@ Se Ollama corre na máquina host, `host.docker.internal` resolvelo en macOS/Wind
 docker run --rm --network host \
   -e HOST=0.0.0.0 \
   -e PORT=8987 \
-  pdfbot
+  rag-go
 ```
 
 > O contedor arranca en modo web automaticamente. Se o índice `db_vectores.gob` non está incluído, o contedor executa a indexación (necesita `bge-m3:latest` accesible) antes de servir.
@@ -160,7 +160,7 @@ docker run --rm \
   -e HOST=0.0.0.0 \
   -p 8987:8987 \
   -e PORT=8987 \
-  pdfbot
+  rag-go
 ```
 
 Actualizar a normativa a partir de agora resúmese en:
@@ -179,10 +179,10 @@ rm data/db_vectores.gob
 Se prefires que Docker xestione o almacenamento (sen directorio no host), usa un volume nomeado; na primeira creación cópiase o estado inicial da imaxe:
 
 ```bash
-docker run --rm -v pdfbot_data:/data \
+docker run --rm -v rag-go_data:/data \
   -e HOST=0.0.0.0 -p 8987:8987 \
   -e PORT=8987 \
-  pdfbot
+  rag-go
 ```
 
 > 📦 Desde fóra do contedor tócase só o que hai no volume: non fai falta `docker cp` nin entrar nel.

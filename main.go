@@ -145,7 +145,7 @@ func main() {
 		return
 	}
 
-	fmt.Println("Uso:\n  pdfbot -index (indexar PDFs)\n  pdfbot -q \"pregunta\" -model \"qwen3.5:4b-mlx\" (consola)\n  pdfbot -web (servidor web)\n  pdfbot -web -host 0.0.0.0 -port 9000 (servidor web con bind/porto personalizados)")
+	fmt.Println("Uso:\n  rag-go -index (indexar PDFs)\n  rag-go -q \"pregunta\" -model \"qwen3.5:4b-mlx\" (consola)\n  rag-go -web (servidor web)\n  rag-go -web -host 0.0.0.0 -port 9000 (servidor web con bind/porto personalizados)")
 }
 
 func cargarDB() {
